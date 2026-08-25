@@ -1,9 +1,9 @@
 use dicom_core::Tag;
 use proc_macro::TokenStream;
-use proc_macro2::Ident;
+use proc_macro2::{Ident, Literal};
 use quote::quote;
 use syn::{
-    Attribute, DeriveInput, GenericArgument, LitStr, PathArguments, Type, TypePath,
+    Attribute, DeriveInput, Field, GenericArgument, LitStr, PathArguments, Type, TypePath,
     parse_macro_input,
 };
 
@@ -127,6 +127,12 @@ fn get_inner_type_vec(ty: &Type) -> Option<&Type> {
     get_inner_bracketed_type(ty, "Vec")
 }
 
+fn literal_group_element(dicom_field_attr: &DicomFieldAttr) -> (Literal, Literal) {
+    let lit_group = Literal::u16_unsuffixed(dicom_field_attr.tag.as_ref().unwrap().group);
+    let lit_element = Literal::u16_unsuffixed(dicom_field_attr.tag.as_ref().unwrap().element);
+    (lit_group, lit_element)
+}
+
 #[proc_macro_derive(Dicom, attributes(dicom))]
 pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
     let input = parse_macro_input!(tokens as DeriveInput);
@@ -144,25 +150,10 @@ pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
     let mut reading_fields = vec![];
     let mut self_fields = vec![];
     for field in fields {
-        let mut dicom_field_attr = None;
-        for attr in &field.attrs {
-            if let Ok(Some(parsed_attr)) = parse_dicom_attr(attr) {
-                if dicom_field_attr.is_some() {
-                    return syn::Error::new_spanned(
-                        attr,
-                        "duplicate dicom attribute: only one dicom attribute is allowed per field",
-                    )
-                    .to_compile_error()
-                    .into();
-                }
-                dicom_field_attr = Some(parsed_attr);
-            }
-        }
-        if dicom_field_attr.is_none() {
-            return syn::Error::new_spanned(field, "A dicom attribute is required.")
-                .to_compile_error()
-                .into();
-        }
+        let dicom_field_attr = match get_dicom_field_attr(&field) {
+            Ok(value) => value,
+            Err(value) => return value,
+        };
         let dicom_field_attr = dicom_field_attr.unwrap();
         if dicom_field_attr.transparent {
             continue;
@@ -172,53 +163,22 @@ pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
         let field_ident = field.ident.clone().unwrap();
         let field_ty = field.ty.clone();
 
-        let inner_option_ty = get_inner_type_option(&field.ty);
-
-        let lit_group = proc_macro2::Literal::u16_unsuffixed(dicom_field_attr.tag.as_ref().unwrap().group);
-        let lit_element = proc_macro2::Literal::u16_unsuffixed(dicom_field_attr.tag.as_ref().unwrap().element);
-
-        if inner_option_ty.is_none() {
-            if dicom_field_attr.vr.as_ref().unwrap() == "SQ" {
-                reading_fields.push(quote! {
-                    let _ = read_option_seq(#field_ident);
-                });
-            } else {
-                let inner_vec_ty = get_inner_type_vec(&field.ty);
-
-                if inner_vec_ty.is_none() {
-                    if let Some(vr) = dicom_field_attr.vr
-                        && vr == "LO"
-                    {
-                        reading_fields.push(quote! {
-                        let #field_ident = dcm_io::read_str(obj, dicom_core::Tag(#lit_group, #lit_element))?;
-                    });
-                        self_fields.push(quote! {
-                            #field_ident: #field_ident,
-                        });
-                    }
-                } else {
-                    if let Some(vr) = dicom_field_attr.vr
-                        && vr == "LO"
-                    {
-                        reading_fields.push(quote! {
-                        let #field_ident = dcm_io::read_strs(obj, dicom_core::Tag(#lit_group, #lit_element))?;
-                    });
-                        self_fields.push(quote! {
-                            #field_ident: #field_ident,
-                        });
-                    }
-                }
+        match get_inner_type_option(&field.ty) {
+            None => {
+                handle_required_fields(
+                    &mut reading_fields,
+                    &mut self_fields,
+                    &dicom_field_attr,
+                    &field,
+                );
             }
-        } else {
-            if dicom_field_attr.vr.as_ref().unwrap() == "SQ" {
-                reading_fields.push(quote! {
-                    let _ = read_option_value(#field_ident);
-                });
-            } else {
-
-                reading_fields.push(quote! {
-                    let _ = read_option_value(#field_ident);
-                });
+            Some(_inner_ty) => {
+                handle_optional_fields(
+                    &mut reading_fields,
+                    &mut self_fields,
+                    &dicom_field_attr,
+                    &field,
+                );
             }
         }
 
@@ -251,4 +211,116 @@ pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
         }
     };
     expanded.into()
+}
+
+fn get_dicom_field_attr(field: &&Field) -> Result<Option<DicomFieldAttr>, TokenStream> {
+    let mut dicom_field_attr = None;
+    for attr in &field.attrs {
+        if let Ok(Some(parsed_attr)) = parse_dicom_attr(attr) {
+            if dicom_field_attr.is_some() {
+                return Err(syn::Error::new_spanned(
+                    attr,
+                    "duplicate dicom attribute: only one dicom attribute is allowed per field",
+                )
+                .to_compile_error()
+                .into());
+            }
+            dicom_field_attr = Some(parsed_attr);
+        }
+    }
+    if dicom_field_attr.is_none() {
+        return Err(
+            syn::Error::new_spanned(field, "A dicom attribute is required.")
+                .to_compile_error()
+                .into(),
+        );
+    }
+    Ok(dicom_field_attr)
+}
+
+fn handle_required_fields(
+    reading_fields: &mut Vec<proc_macro2::TokenStream>,
+    self_fields: &mut Vec<proc_macro2::TokenStream>,
+    dicom_field_attr: &DicomFieldAttr,
+    field: &Field,
+) {
+    let inner_vec_ty = get_inner_type_vec(&field.ty);
+    let (lit_group, lit_element) = literal_group_element(&dicom_field_attr);
+    let field_ident = field.ident.clone().unwrap();
+    if dicom_field_attr.vr.as_ref().unwrap() == "SQ" {
+        reading_fields.push(quote! {
+            let _ = read_option_seq(#field_ident);
+        });
+    } else {
+        if inner_vec_ty.is_none() {
+            if let Some(vr) = &dicom_field_attr.vr
+                && vr == "LO"
+            {
+                reading_fields.push(quote! {
+                            let #field_ident = dcm_io::read_str(obj, dicom_core::Tag(#lit_group, #lit_element))?;
+                        });
+                self_fields.push(quote! {
+                    #field_ident: #field_ident,
+                });
+            }
+        } else {
+            if let Some(vr) = &dicom_field_attr.vr
+                && vr == "LO"
+            {
+                reading_fields.push(quote! {
+                            let #field_ident = dcm_io::read_strs(obj, dicom_core::Tag(#lit_group, #lit_element))?;
+                        });
+                self_fields.push(quote! {
+                    #field_ident: #field_ident,
+                });
+            }
+        }
+    }
+}
+
+fn handle_optional_fields(
+    reading_fields: &mut Vec<proc_macro2::TokenStream>,
+    self_fields: &mut Vec<proc_macro2::TokenStream>,
+    dicom_field_attr: &DicomFieldAttr,
+    field: &Field,
+) {
+    let field_ident = field.ident.clone().unwrap();
+    let inner_vec_ty = match get_inner_type_option(&field.ty) {
+        None => get_inner_type_vec(&field.ty),
+        Some(inner_option_ty) => get_inner_type_vec(&inner_option_ty),
+    };
+    let (lit_group, lit_element) = literal_group_element(&dicom_field_attr);
+    if dicom_field_attr.vr.as_ref().unwrap() == "SQ" {
+        reading_fields.push(quote! {
+            let _ = read_option_value(#field_ident);
+        });
+    } else {
+        if let Some(vr) = &dicom_field_attr.vr
+            && vr == "LO"
+        {
+            if inner_vec_ty.is_none() {
+                if let Some(vr) = &dicom_field_attr.vr
+                    && vr == "LO"
+                {
+                    reading_fields.push(quote! {
+                                    let #field_ident = dcm_io::read_str_opt(obj, dicom_core::Tag(#lit_group, #lit_element))?;
+                                });
+                    self_fields.push(quote! {
+                        #field_ident: #field_ident,
+                    });
+                }
+            } else {
+                if let Some(vr) = &dicom_field_attr.vr
+                    && vr == "LO"
+                {
+                    reading_fields.push(quote! {
+                                    let #field_ident = dcm_io::read_strs_opt(obj, dicom_core::Tag(#lit_group, #lit_element))?;
+                                });
+                    self_fields.push(quote! {
+                        #field_ident: #field_ident,
+                    });
+                }
+            }
+        }
+    }
 }
