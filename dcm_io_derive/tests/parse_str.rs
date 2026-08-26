@@ -32,8 +32,8 @@ mod tests {
     fn read_required_str_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
-        let required_str_field = RequiredStrFieldReader::read_dicom_obj(&mut obj).unwrap();
-        assert_eq!(required_str_field.patient_id.as_str(), "123456");
+        let required_field = RequiredStrFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert_eq!(required_field.patient_id.as_str(), "123456");
     }
 
     #[test]
@@ -47,14 +47,14 @@ mod tests {
             ),
         );
         let _ = obj.put_element(ime);
-        let required_str_field = RequiredStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
-        assert_eq!(required_str_field.deidentification_method.len(), 2);
+        let required_field = RequiredStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert_eq!(required_field.deidentification_method.len(), 2);
         assert_eq!(
-            required_str_field.deidentification_method[0].as_str(),
+            required_field.deidentification_method[0].as_str(),
             "123456"
         );
         assert_eq!(
-            required_str_field.deidentification_method[1].as_str(),
+            required_field.deidentification_method[1].as_str(),
             "789012"
         );
     }
@@ -63,10 +63,10 @@ mod tests {
     fn read_optional_str_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
-        let required_str_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
-        assert!(required_str_field.patient_id.is_some());
+        let optional_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert!(optional_field.patient_id.is_some());
         assert_eq!(
-            required_str_field.patient_id.as_ref().unwrap().as_str(),
+            optional_field.patient_id.as_ref().unwrap().as_str(),
             "123456"
         );
     }
@@ -74,8 +74,8 @@ mod tests {
     #[test]
     fn read_empty_optional_str_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
-        let required_str_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
-        assert!(required_str_field.patient_id.is_none());
+        let optional_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert!(optional_field.patient_id.is_none());
     }
 
     #[test]
@@ -89,10 +89,10 @@ mod tests {
             ),
         );
         let _ = obj.put_element(ime);
-        let required_str_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
-        assert!(required_str_field.deidentification_method.is_some());
+        let optional_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert!(optional_field.deidentification_method.is_some());
         assert_eq!(
-            required_str_field
+            optional_field
                 .deidentification_method
                 .as_ref()
                 .unwrap()
@@ -100,11 +100,11 @@ mod tests {
             2
         );
         assert_eq!(
-            required_str_field.deidentification_method.as_ref().unwrap()[0].as_str(),
+            optional_field.deidentification_method.as_ref().unwrap()[0].as_str(),
             "123456"
         );
         assert_eq!(
-            required_str_field.deidentification_method.as_ref().unwrap()[1].as_str(),
+            optional_field.deidentification_method.as_ref().unwrap()[1].as_str(),
             "789012"
         );
     }
@@ -112,8 +112,8 @@ mod tests {
     #[test]
     fn read_empty_optional_strs_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
-        let required_str_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
-        assert!(required_str_field.deidentification_method.is_none());
+        let optional_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert!(optional_field.deidentification_method.is_none());
     }
 }
 
