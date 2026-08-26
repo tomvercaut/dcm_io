@@ -76,6 +76,7 @@ mod tests {
     }
 
 
+
     #[test]
     fn read_optional_strs_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
@@ -100,6 +101,12 @@ mod tests {
         );
     }
 
+    #[test]
+    fn read_empty_optional_strs_field() {
+        let mut obj = dicom_object::InMemDicomObject::new_empty();
+        let required_str_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert!(required_str_field.deidentification_method.is_none());
+    }
 }
 
 fn main() {}
