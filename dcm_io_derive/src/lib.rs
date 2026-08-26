@@ -1,6 +1,6 @@
 use dicom_core::Tag;
 use proc_macro::TokenStream;
-use proc_macro2::{Ident, Literal};
+use proc_macro2::{Ident, Literal, Span};
 use quote::quote;
 use syn::{
     Attribute, DeriveInput, Field, GenericArgument, LitStr, PathArguments, Type, TypePath,
@@ -163,24 +163,12 @@ pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
         let field_ident = field.ident.clone().unwrap();
         let field_ty = field.ty.clone();
 
-        match get_inner_type_option(&field.ty) {
-            None => {
-                handle_required_fields(
-                    &mut reading_fields,
-                    &mut self_fields,
-                    &dicom_field_attr,
-                    &field,
-                );
-            }
-            Some(_inner_ty) => {
-                handle_optional_fields(
-                    &mut reading_fields,
-                    &mut self_fields,
-                    &dicom_field_attr,
-                    &field,
-                );
-            }
-        }
+        handle_fields(
+            &mut reading_fields,
+            &mut self_fields,
+            &dicom_field_attr,
+            &field,
+        );
 
         let q = quote! {
             #field_vis #field_ident : #field_ty
@@ -238,89 +226,194 @@ fn get_dicom_field_attr(field: &&Field) -> Result<Option<DicomFieldAttr>, TokenS
     Ok(dicom_field_attr)
 }
 
-fn handle_required_fields(
+fn handle_fields(
     reading_fields: &mut Vec<proc_macro2::TokenStream>,
     self_fields: &mut Vec<proc_macro2::TokenStream>,
     dicom_field_attr: &DicomFieldAttr,
     field: &Field,
 ) {
-    let inner_vec_ty = get_inner_type_vec(&field.ty);
+    let vr = dicom_field_attr.vr.as_ref().unwrap();
+    let type_info = TypeInfo::new(&field.ty, vr);
     let (lit_group, lit_element) = literal_group_element(&dicom_field_attr);
     let field_ident = field.ident.clone().unwrap();
-    if dicom_field_attr.vr.as_ref().unwrap() == "SQ" {
-        reading_fields.push(quote! {
-            let _ = read_option_seq(#field_ident);
-        });
-    } else {
-        if inner_vec_ty.is_none() {
-            if let Some(vr) = &dicom_field_attr.vr
-                && vr == "LO"
-            {
-                reading_fields.push(quote! {
-                            let #field_ident = dcm_io::read_str(obj, dicom_core::Tag(#lit_group, #lit_element))?;
-                        });
-                self_fields.push(quote! {
-                    #field_ident: #field_ident,
-                });
-            }
-        } else {
-            if let Some(vr) = &dicom_field_attr.vr
-                && vr == "LO"
-            {
-                reading_fields.push(quote! {
-                            let #field_ident = dcm_io::read_strs(obj, dicom_core::Tag(#lit_group, #lit_element))?;
-                        });
-                self_fields.push(quote! {
-                    #field_ident: #field_ident,
-                });
-            }
+    match to_fn_name(vr, type_info.multiple, type_info.optional) {
+        FnName::Seq => {
+            // Handle sequences
+            reading_fields.push(
+                syn::Error::new_spanned(field, "Reading sequences is not yet implemented.")
+                    .to_compile_error(),
+            );
+        }
+        FnName::Unknown => {
+            // Handle unknown
+            let msg = format!(
+                "Reading {} [optional: {}, multiple: {}] is not yet implemented.",
+                vr, type_info.optional, type_info.multiple
+            );
+            reading_fields.push(syn::Error::new_spanned(field, msg).to_compile_error());
+        }
+        FnName::Name(fn_name) => {
+            // handle the actual function name
+            let fn_ident = Ident::new(&fn_name, Span::call_site());
+            reading_fields.push(
+                quote! {
+                        let #field_ident = dcm_io::#fn_ident(obj, dicom_core::Tag(#lit_group, #lit_element))?;
+                    });
+            self_fields.push(quote! {
+                #field_ident: #field_ident,
+            });
         }
     }
 }
 
-fn handle_optional_fields(
-    reading_fields: &mut Vec<proc_macro2::TokenStream>,
-    self_fields: &mut Vec<proc_macro2::TokenStream>,
-    dicom_field_attr: &DicomFieldAttr,
-    field: &Field,
-) {
-    let field_ident = field.ident.clone().unwrap();
-    let inner_vec_ty = match get_inner_type_option(&field.ty) {
-        None => get_inner_type_vec(&field.ty),
-        Some(inner_option_ty) => get_inner_type_vec(&inner_option_ty),
+struct TypeInfo {
+    // Inner type of the field.
+    // If the field is a sequence, this is the type of the sequence and not the inner type.
+    ty: Type,
+    // True if the field is a sequence.
+    is_seq: bool,
+    // Field can contain multiple values.
+    multiple: bool,
+    // Field is optional.
+    optional: bool,
+}
+
+impl TypeInfo {
+    /// Creates a new `TypeInfo` instance by analyzing a field's type and DICOM Value Representation.
+    ///
+    /// This method examines the Rust type to determine whether it represents an optional field
+    /// (wrapped in `Option<T>`), a field with multiple values (wrapped in `Vec<T>`), or both.
+    /// For sequence types (VR "SQ" or "sq"), it preserves the outer type structure.
+    ///
+    /// # Arguments
+    ///
+    /// * `ty` - The Rust type of the field to analyze (e.g., `String`, `Option<String>`, `Vec<String>`)
+    /// * `vr` - The DICOM Value Representation string (e.g., "LO", "SQ")
+    ///
+    /// # Returns
+    ///
+    /// Returns a `TypeInfo` struct containing:
+    /// - `ty`: The inner type (or outer type for sequences)
+    /// - `is_seq`: `true` if the VR is a sequence type ("SQ" or "sq")
+    /// - `multiple`: `true` if the field can contain multiple values (`Vec<T>`)
+    /// - `optional`: `true` if the field is optional (`Option<T>`)
+    ///
+    /// # Examples
+    ///
+    /// - `TypeInfo::new(&String, "LO")` → `{ ty: String, is_seq: false, multiple: false, optional: false }`
+    /// - `TypeInfo::new(&Option<String>, "LO")` → `{ ty: String, is_seq: false, multiple: false, optional: true }`
+    /// - `TypeInfo::new(&Vec<String>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: false }`
+    /// - `TypeInfo::new(&Option<Vec<String>>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: true }`
+    /// - `TypeInfo::new(&Vec<DicomObject>, "SQ")` → `{ ty: Vec<DicomObject>, is_seq: true, multiple: false, optional: false }`
+
+    fn new(ty: &Type, vr: &str) -> Self {
+        match get_inner_type_option(&ty) {
+            None => match get_inner_type_vec(&ty) {
+                None => Self {
+                    ty: ty.clone(),
+                    is_seq: false,
+                    multiple: false,
+                    optional: false,
+                },
+                Some(inner_vec_ty) => {
+                    if vr == "SQ" || vr == "sq" {
+                        Self {
+                            // Store the outer type of the sequence, not the inner.
+                            ty: ty.clone(),
+                            is_seq: true,
+                            multiple: false,
+                            optional: false,
+                        }
+                    } else {
+                        Self {
+                            ty: inner_vec_ty.clone(),
+                            is_seq: false,
+                            multiple: true,
+                            optional: false,
+                        }
+                    }
+                }
+            },
+            Some(inner_option_ty) => match get_inner_type_vec(&inner_option_ty) {
+                None => Self {
+                    ty: inner_option_ty.clone(),
+                    is_seq: false,
+                    multiple: false,
+                    optional: true,
+                },
+                Some(inner_vec_ty) => {
+                    if vr == "SQ" || vr == "sq" {
+                        Self {
+                            // Store the outer type of the sequence, not the inner.
+                            ty: inner_option_ty.clone(),
+                            is_seq: true,
+                            multiple: false,
+                            optional: true,
+                        }
+                    } else {
+                        Self {
+                            ty: inner_vec_ty.clone(),
+                            is_seq: false,
+                            multiple: true,
+                            optional: true,
+                        }
+                    }
+                }
+            },
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+enum FnName {
+    Seq,
+    Unknown,
+    Name(String),
+}
+
+/// Converts a DICOM Value Representation (VR) string into a function name identifier.
+///
+/// This function determines the appropriate reader function name based on the DICOM VR type
+/// and the characteristics of the field (whether it contains multiple values and whether it's optional).
+///
+/// # Arguments
+///
+/// * `vr` - The DICOM Value Representation string (e.g., "LO", "SQ")
+/// * `multiple` - Whether the field contains multiple values (e.g., `Vec<String>`)
+/// * `optional` - Whether the field is optional (e.g., `Option<T>`)
+///
+/// # Returns
+///
+/// Returns an ` FnName ` enum variant:
+/// - `FnName::Seq` for sequence (SQ) VR types
+/// - `FnName::Name(String)` containing the generated function name (e.g., "read_str", "read_strs", "read_str_opt", "read_strs_opt")
+/// - `FnName::Unknown` for unsupported VR types
+///
+/// # Examples
+///
+/// - `to_fn_name("LO", false, false)` returns `FnName::Name("read_str")`
+/// - `to_fn_name("LO", true, false)` returns `FnName::Name("read_strs")`
+/// - `to_fn_name("LO", false, true)` returns `FnName::Name("read_str_opt")`
+/// - `to_fn_name("LO", true, true)` returns `FnName::Name("read_strs_opt")`
+/// - `to_fn_name("SQ", _, _)` returns `FnName::Seq`
+fn to_fn_name(vr: &str, multiple: bool, optional: bool) -> FnName {
+    let fn_name = match vr {
+        "SQ" => FnName::Seq,
+        "LO" => FnName::Name("read_str".to_string()),
+        _ => FnName::Unknown,
     };
-    let (lit_group, lit_element) = literal_group_element(&dicom_field_attr);
-    if dicom_field_attr.vr.as_ref().unwrap() == "SQ" {
-        reading_fields.push(quote! {
-            let _ = read_option_value(#field_ident);
-        });
-    } else {
-        if let Some(vr) = &dicom_field_attr.vr
-            && vr == "LO"
-        {
-            if inner_vec_ty.is_none() {
-                if let Some(vr) = &dicom_field_attr.vr
-                    && vr == "LO"
-                {
-                    reading_fields.push(quote! {
-                                    let #field_ident = dcm_io::read_str_opt(obj, dicom_core::Tag(#lit_group, #lit_element))?;
-                                });
-                    self_fields.push(quote! {
-                        #field_ident: #field_ident,
-                    });
-                }
-            } else {
-                if let Some(vr) = &dicom_field_attr.vr
-                    && vr == "LO"
-                {
-                    reading_fields.push(quote! {
-                                    let #field_ident = dcm_io::read_strs_opt(obj, dicom_core::Tag(#lit_group, #lit_element))?;
-                                });
-                    self_fields.push(quote! {
-                        #field_ident: #field_ident,
-                    });
-                }
+    match fn_name {
+        FnName::Seq => fn_name,
+        FnName::Unknown => fn_name,
+        FnName::Name(name) => {
+            let mut tname = name;
+            if multiple {
+                tname.push_str("s");
             }
+            if optional {
+                tname.push_str("_opt");
+            }
+            FnName::Name(tname)
         }
     }
 }
