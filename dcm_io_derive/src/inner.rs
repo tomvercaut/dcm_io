@@ -1,6 +1,9 @@
 use syn::{GenericArgument, PathArguments, Type, TypePath};
 
-pub(crate) fn get_inner_bracketed_type<'a, 'b>(ty: &'a Type, outer_ident_name: &'b str) -> Option<&'a Type> {
+pub(crate) fn get_inner_bracketed_type<'a, 'b>(
+    ty: &'a Type,
+    outer_ident_name: &'b str,
+) -> Option<&'a Type> {
     let Type::Path(TypePath { path, .. }) = ty else {
         return None;
     };

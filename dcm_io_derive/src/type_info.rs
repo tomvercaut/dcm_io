@@ -1,6 +1,6 @@
+use crate::inner::{get_inner_type_option, get_inner_type_vec};
 use dicom_core::VR;
 use syn::Type;
-use crate::inner::{get_inner_type_option, get_inner_type_vec};
 
 pub(crate) struct TypeInfo {
     // Inner type of the field.
