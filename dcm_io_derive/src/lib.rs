@@ -1,13 +1,16 @@
 mod fn_name;
+mod type_info;
+mod inner;
 
 use crate::fn_name::{FnName, to_fn_name};
+use crate::type_info::TypeInfo;
 use dicom_core::{Tag, VR};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Literal, Span};
 use quote::quote;
 use std::str::FromStr;
 use syn::{
-    Attribute, DeriveInput, Field, GenericArgument, LitStr, PathArguments, Type, TypePath,
+    Attribute, DeriveInput, Field, LitStr,
     parse_macro_input,
 };
 
@@ -94,41 +97,6 @@ fn parse_dicom_attr(attr: &Attribute) -> syn::Result<Option<DicomFieldAttr>> {
         }));
     }
     Ok(Some(dicom_attr))
-}
-
-fn get_inner_bracketed_type<'a, 'b>(ty: &'a Type, outer_ident_name: &'b str) -> Option<&'a Type> {
-    let Type::Path(TypePath { path, .. }) = ty else {
-        return None;
-    };
-
-    let segments = &path.segments;
-    let last_segment = segments.last()?;
-    let ident = &last_segment.ident;
-
-    let ident_name = ident.to_string();
-    if ident_name.as_str() != outer_ident_name {
-        return None;
-    }
-
-    let PathArguments::AngleBracketed(generics) = &last_segment.arguments else {
-        return None;
-    };
-
-    generics.args.first().and_then(|arg| {
-        if let GenericArgument::Type(inner_type) = arg {
-            Some(inner_type)
-        } else {
-            None
-        }
-    })
-}
-
-fn get_inner_type_option(ty: &Type) -> Option<&Type> {
-    get_inner_bracketed_type(ty, "Option")
-}
-
-fn get_inner_type_vec(ty: &Type) -> Option<&Type> {
-    get_inner_bracketed_type(ty, "Vec")
 }
 
 fn literal_group_element(dicom_field_attr: &DicomFieldAttr) -> (Literal, Literal) {
@@ -266,104 +234,6 @@ fn handle_fields(
             self_fields.push(quote! {
                 #field_ident: #field_ident,
             });
-        }
-    }
-}
-
-struct TypeInfo {
-    // Inner type of the field.
-    // If the field is a sequence, this is the type of the sequence and not the inner type.
-    ty: Type,
-    // True if the field is a sequence.
-    is_seq: bool,
-    // Field can contain multiple values.
-    multiple: bool,
-    // Field is optional.
-    optional: bool,
-}
-
-impl TypeInfo {
-    /// Creates a new `TypeInfo` instance by analyzing a field's type and DICOM Value Representation.
-    ///
-    /// This method examines the Rust type to determine whether it represents an optional field
-    /// (wrapped in `Option<T>`), a field with multiple values (wrapped in `Vec<T>`), or both.
-    /// For sequence types (VR "SQ" or "sq"), it preserves the outer type structure.
-    ///
-    /// # Arguments
-    ///
-    /// * `ty` - The Rust type of the field to analyze (e.g., `String`, `Option<String>`, `Vec<String>`)
-    /// * `vr` - The DICOM Value Representation (e.g., LO, SQ)
-    ///
-    /// # Returns
-    ///
-    /// Returns a `TypeInfo` struct containing:
-    /// - `ty`: The inner type (or outer type for sequences)
-    /// - `is_seq`: `true` if the VR is a sequence type ("SQ" or "sq")
-    /// - `multiple`: `true` if the field can contain multiple values (`Vec<T>`)
-    /// - `optional`: `true` if the field is optional (`Option<T>`)
-    ///
-    /// # Examples
-    ///
-    /// - `TypeInfo::new(&String, "LO")` → `{ ty: String, is_seq: false, multiple: false, optional: false }`
-    /// - `TypeInfo::new(&Option<String>, "LO")` → `{ ty: String, is_seq: false, multiple: false, optional: true }`
-    /// - `TypeInfo::new(&Vec<String>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: false }`
-    /// - `TypeInfo::new(&Option<Vec<String>>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: true }`
-    /// - `TypeInfo::new(&Vec<DicomObject>, "SQ")` → `{ ty: Vec<DicomObject>, is_seq: true, multiple: false, optional: false }`
-
-    fn new(ty: &Type, vr: VR) -> Self {
-        match get_inner_type_option(&ty) {
-            None => match get_inner_type_vec(&ty) {
-                None => Self {
-                    ty: ty.clone(),
-                    is_seq: false,
-                    multiple: false,
-                    optional: false,
-                },
-                Some(inner_vec_ty) => {
-                    if vr == VR::SQ {
-                        Self {
-                            // Store the outer type of the sequence, not the inner.
-                            ty: ty.clone(),
-                            is_seq: true,
-                            multiple: false,
-                            optional: false,
-                        }
-                    } else {
-                        Self {
-                            ty: inner_vec_ty.clone(),
-                            is_seq: false,
-                            multiple: true,
-                            optional: false,
-                        }
-                    }
-                }
-            },
-            Some(inner_option_ty) => match get_inner_type_vec(&inner_option_ty) {
-                None => Self {
-                    ty: inner_option_ty.clone(),
-                    is_seq: false,
-                    multiple: false,
-                    optional: true,
-                },
-                Some(inner_vec_ty) => {
-                    if vr == VR::SQ {
-                        Self {
-                            // Store the outer type of the sequence, not the inner.
-                            ty: inner_option_ty.clone(),
-                            is_seq: true,
-                            multiple: false,
-                            optional: true,
-                        }
-                    } else {
-                        Self {
-                            ty: inner_vec_ty.clone(),
-                            is_seq: false,
-                            multiple: true,
-                            optional: true,
-                        }
-                    }
-                }
-            },
         }
     }
 }
