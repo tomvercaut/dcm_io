@@ -1,3 +1,6 @@
+mod fn_name;
+
+use crate::fn_name::{FnName, to_fn_name};
 use dicom_core::{Tag, VR};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Literal, Span};
@@ -361,60 +364,6 @@ impl TypeInfo {
                     }
                 }
             },
-        }
-    }
-}
-
-#[derive(Clone, Debug)]
-enum FnName {
-    Seq,
-    Unknown,
-    Name(String),
-}
-
-/// Converts a DICOM Value Representation (VR) string into a function name identifier.
-///
-/// This function determines the appropriate reader function name based on the DICOM VR type
-/// and the characteristics of the field (whether it contains multiple values and whether it's optional).
-///
-/// # Arguments
-///
-/// * `vr` - The DICOM Value Representation string (e.g., "LO", "SQ")
-/// * `multiple` - Whether the field contains multiple values (e.g., `Vec<String>`)
-/// * `optional` - Whether the field is optional (e.g., `Option<T>`)
-///
-/// # Returns
-///
-/// Returns an ` FnName ` enum variant:
-/// - `FnName::Seq` for sequence (SQ) VR types
-/// - `FnName::Name(String)` containing the generated function name (e.g., "read_str", "read_strs", "read_str_opt", "read_strs_opt")
-/// - `FnName::Unknown` for unsupported VR types
-///
-/// # Examples
-///
-/// - `to_fn_name("LO", false, false)` returns `FnName::Name("read_str")`
-/// - `to_fn_name("LO", true, false)` returns `FnName::Name("read_strs")`
-/// - `to_fn_name("LO", false, true)` returns `FnName::Name("read_str_opt")`
-/// - `to_fn_name("LO", true, true)` returns `FnName::Name("read_strs_opt")`
-/// - `to_fn_name("SQ", _, _)` returns `FnName::Seq`
-fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
-    let fn_name = match vr {
-        VR::SQ => FnName::Seq,
-        VR::LO => FnName::Name("read_str".to_string()),
-        _ => FnName::Unknown,
-    };
-    match fn_name {
-        FnName::Seq => fn_name,
-        FnName::Unknown => fn_name,
-        FnName::Name(name) => {
-            let mut tname = name;
-            if multiple {
-                tname.push_str("s");
-            }
-            if optional {
-                tname.push_str("_opt");
-            }
-            FnName::Name(tname)
         }
     }
 }
