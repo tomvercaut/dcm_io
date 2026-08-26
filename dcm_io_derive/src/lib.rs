@@ -1,7 +1,8 @@
-use dicom_core::Tag;
+use dicom_core::{Tag, VR};
 use proc_macro::TokenStream;
 use proc_macro2::{Ident, Literal, Span};
 use quote::quote;
+use std::str::FromStr;
 use syn::{
     Attribute, DeriveInput, Field, GenericArgument, LitStr, PathArguments, Type, TypePath,
     parse_macro_input,
@@ -37,7 +38,7 @@ impl From<&AttrTag> for Tag {
 #[derive(Default, Clone, Debug)]
 struct DicomFieldAttr {
     pub tag: Option<AttrTag>,
-    pub vr: Option<String>,
+    pub vr: Option<VR>,
     transparent: bool,
 }
 
@@ -72,7 +73,7 @@ fn parse_dicom_attr(attr: &Attribute) -> syn::Result<Option<DicomFieldAttr>> {
         } else if meta.path.is_ident("vr") {
             let value = meta.value()?;
             let lit: LitStr = value.parse()?;
-            dicom_attr.vr = Some(lit.value());
+            dicom_attr.vr = Some(VR::from_str(&lit.value()).map_err(|_| meta.error("Invalid VR value"))?);
             Ok(())
         } else if meta.path.is_ident("transparent") {
             dicom_attr.transparent = true;
@@ -232,7 +233,7 @@ fn handle_fields(
     dicom_field_attr: &DicomFieldAttr,
     field: &Field,
 ) {
-    let vr = dicom_field_attr.vr.as_ref().unwrap();
+    let vr = *dicom_field_attr.vr.as_ref().unwrap();
     let type_info = TypeInfo::new(&field.ty, vr);
     let (lit_group, lit_element) = literal_group_element(&dicom_field_attr);
     let field_ident = field.ident.clone().unwrap();
@@ -288,7 +289,7 @@ impl TypeInfo {
     /// # Arguments
     ///
     /// * `ty` - The Rust type of the field to analyze (e.g., `String`, `Option<String>`, `Vec<String>`)
-    /// * `vr` - The DICOM Value Representation string (e.g., "LO", "SQ")
+    /// * `vr` - The DICOM Value Representation (e.g., LO, SQ)
     ///
     /// # Returns
     ///
@@ -306,7 +307,7 @@ impl TypeInfo {
     /// - `TypeInfo::new(&Option<Vec<String>>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: true }`
     /// - `TypeInfo::new(&Vec<DicomObject>, "SQ")` → `{ ty: Vec<DicomObject>, is_seq: true, multiple: false, optional: false }`
 
-    fn new(ty: &Type, vr: &str) -> Self {
+    fn new(ty: &Type, vr: VR) -> Self {
         match get_inner_type_option(&ty) {
             None => match get_inner_type_vec(&ty) {
                 None => Self {
@@ -316,7 +317,7 @@ impl TypeInfo {
                     optional: false,
                 },
                 Some(inner_vec_ty) => {
-                    if vr == "SQ" || vr == "sq" {
+                    if vr == VR::SQ {
                         Self {
                             // Store the outer type of the sequence, not the inner.
                             ty: ty.clone(),
@@ -342,7 +343,7 @@ impl TypeInfo {
                     optional: true,
                 },
                 Some(inner_vec_ty) => {
-                    if vr == "SQ" || vr == "sq" {
+                    if vr == VR::SQ {
                         Self {
                             // Store the outer type of the sequence, not the inner.
                             ty: inner_option_ty.clone(),
@@ -396,10 +397,10 @@ enum FnName {
 /// - `to_fn_name("LO", false, true)` returns `FnName::Name("read_str_opt")`
 /// - `to_fn_name("LO", true, true)` returns `FnName::Name("read_strs_opt")`
 /// - `to_fn_name("SQ", _, _)` returns `FnName::Seq`
-fn to_fn_name(vr: &str, multiple: bool, optional: bool) -> FnName {
+fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
     let fn_name = match vr {
-        "SQ" => FnName::Seq,
-        "LO" => FnName::Name("read_str".to_string()),
+        VR::SQ => FnName::Seq,
+        VR::LO => FnName::Name("read_str".to_string()),
         _ => FnName::Unknown,
     };
     match fn_name {
