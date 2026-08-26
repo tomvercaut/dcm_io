@@ -65,7 +65,10 @@ mod tests {
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
         let required_str_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
         assert!(required_str_field.patient_id.is_some());
-        assert_eq!(required_str_field.patient_id.as_ref().unwrap().as_str(), "123456");
+        assert_eq!(
+            required_str_field.patient_id.as_ref().unwrap().as_str(),
+            "123456"
+        );
     }
 
     #[test]
@@ -74,8 +77,6 @@ mod tests {
         let required_str_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
         assert!(required_str_field.patient_id.is_none());
     }
-
-
 
     #[test]
     fn read_optional_strs_field() {
@@ -90,7 +91,14 @@ mod tests {
         let _ = obj.put_element(ime);
         let required_str_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
         assert!(required_str_field.deidentification_method.is_some());
-        assert_eq!(required_str_field.deidentification_method.as_ref().unwrap().len(), 2);
+        assert_eq!(
+            required_str_field
+                .deidentification_method
+                .as_ref()
+                .unwrap()
+                .len(),
+            2
+        );
         assert_eq!(
             required_str_field.deidentification_method.as_ref().unwrap()[0].as_str(),
             "123456"
