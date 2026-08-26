@@ -7,14 +7,17 @@ edition = "2024"
 syn = { version = "3", features = ["extra-traits"] }
 quote = "1"
 proc-macro2 = "1"
-dcm_io = {path = "../dcm_io"}
+dcm_io = { path = "../dcm_io" }
 dicom-core.workspace = true
 dicom-object.workspace = true
 
 [lib]
 proc-macro = true
 
+[[test]]
+name = "parse_str"
+path = "tests/parse_str.rs"
 
 [[test]]
-name = "parse_01"
-path = "tests/parse_01.rs"
+name = "parse_tag"
+path = "tests/parse_tag.rs"
