@@ -22,6 +22,12 @@ mod tests {
         pub patient_id: Option<String>,
     }
 
+    #[derive(Dicom, Default, Clone)]
+    pub struct OptionalStrsField {
+        #[dicom(tag = "(0012,0063)", vr = "LO")]
+        pub deidentification_method: Option<Vec<String>>,
+    }
+
     #[test]
     fn read_required_str_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
@@ -68,6 +74,32 @@ mod tests {
         let required_str_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
         assert!(required_str_field.patient_id.is_none());
     }
+
+
+    #[test]
+    fn read_optional_strs_field() {
+        let mut obj = dicom_object::InMemDicomObject::new_empty();
+        let ime = DataElement::new(
+            Tag(0x0012, 0x0063),
+            VR::LO,
+            dicom_core::PrimitiveValue::Strs(
+                vec!["123456".to_string(), "789012".to_string()].into(),
+            ),
+        );
+        let _ = obj.put_element(ime);
+        let required_str_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        assert!(required_str_field.deidentification_method.is_some());
+        assert_eq!(required_str_field.deidentification_method.as_ref().unwrap().len(), 2);
+        assert_eq!(
+            required_str_field.deidentification_method.as_ref().unwrap()[0].as_str(),
+            "123456"
+        );
+        assert_eq!(
+            required_str_field.deidentification_method.as_ref().unwrap()[1].as_str(),
+            "789012"
+        );
+    }
+
 }
 
 fn main() {}
