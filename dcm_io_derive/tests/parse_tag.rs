@@ -37,7 +37,7 @@ mod tests {
             dicom_core::PrimitiveValue::Tags(vec![Tag(0x1234, 0x5600)].into()),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredDicomTagFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let required_field = RequiredDicomTagFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.patient_id, DicomTag::new(0x1234, 0x5600));
     }
 
@@ -50,7 +50,7 @@ mod tests {
             dicom_core::PrimitiveValue::Tags(vec![Tag(0x1234, 0x5600), Tag(0x7890, 0x1200)].into()),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredDicomTagsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let required_field = RequiredDicomTagsFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.deidentification_method.len(), 2);
         assert_eq!(
             required_field.deidentification_method[0],
@@ -71,7 +71,7 @@ mod tests {
             dicom_core::PrimitiveValue::Tags(vec![Tag(0x1234, 0x5600)].into()),
         );
         let _ = obj.put_element(ime);
-        let optionalfield = OptionalDicomTagFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let optionalfield = OptionalDicomTagFieldReader::read_dicom(&obj).unwrap();
         assert!(optionalfield.patient_id.is_some());
         assert_eq!(
             optionalfield.patient_id.as_ref().unwrap(),
@@ -81,8 +81,8 @@ mod tests {
 
     #[test]
     fn read_empty_optional_dicom_tag_field() {
-        let mut obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalDicomTagFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let obj = dicom_object::InMemDicomObject::new_empty();
+        let optional_field = OptionalDicomTagFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.patient_id.is_none());
     }
 
@@ -95,7 +95,7 @@ mod tests {
             dicom_core::PrimitiveValue::Tags(vec![Tag(0x1234, 0x5600), Tag(0x7890, 0x1200)].into()),
         );
         let _ = obj.put_element(ime);
-        let optional_field = OptionalDicomTagsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let optional_field = OptionalDicomTagsFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.deidentification_method.is_some());
         assert_eq!(
             optional_field
@@ -117,8 +117,8 @@ mod tests {
 
     #[test]
     fn read_empty_optional_dicom_tags_field() {
-        let mut obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalDicomTagsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let obj = dicom_object::InMemDicomObject::new_empty();
+        let optional_field = OptionalDicomTagsFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.deidentification_method.is_none());
     }
 }

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use dcm_io::DicomReader;
+    use dcm_io::{DicomReader};
     use dcm_io_derive::Dicom;
     use dicom_core::{DataElement, Tag, VR};
 
@@ -32,7 +32,7 @@ mod tests {
     fn read_required_str_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
-        let required_field = RequiredStrFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let required_field = RequiredStrFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.patient_id.as_str(), "123456");
     }
 
@@ -47,7 +47,7 @@ mod tests {
             ),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let required_field = RequiredStrsFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.deidentification_method.len(), 2);
         assert_eq!(
             required_field.deidentification_method[0].as_str(),
@@ -63,7 +63,7 @@ mod tests {
     fn read_optional_str_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
-        let optional_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let optional_field = OptionalStrFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.patient_id.is_some());
         assert_eq!(
             optional_field.patient_id.as_ref().unwrap().as_str(),
@@ -73,8 +73,8 @@ mod tests {
 
     #[test]
     fn read_empty_optional_str_field() {
-        let mut obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalStrFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let obj = dicom_object::InMemDicomObject::new_empty();
+        let optional_field = OptionalStrFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.patient_id.is_none());
     }
 
@@ -89,7 +89,7 @@ mod tests {
             ),
         );
         let _ = obj.put_element(ime);
-        let optional_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let optional_field = OptionalStrsFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.deidentification_method.is_some());
         assert_eq!(
             optional_field
@@ -111,8 +111,8 @@ mod tests {
 
     #[test]
     fn read_empty_optional_strs_field() {
-        let mut obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalStrsFieldReader::read_dicom_obj(&mut obj).unwrap();
+        let obj = dicom_object::InMemDicomObject::new_empty();
+        let optional_field = OptionalStrsFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.deidentification_method.is_none());
     }
 }

@@ -6,7 +6,7 @@ pub use string::*;
 pub use tag::*;
 
 use dicom_core::value::CastValueError;
-use dicom_object::{AccessError, InMemDicomObject};
+use dicom_object::AccessError;
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -28,12 +28,12 @@ pub enum Error {
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-pub trait DicomReader<T> {
-    fn read_dicom_obj(obj: &mut InMemDicomObject) -> Result<T>;
+pub trait DicomReader<Backend, T> {
+    fn read_dicom(backend: &Backend) -> Result<T>;
 }
 
-pub trait DicomWriter<T> {
-    fn write_dicom_obj(obj: &mut InMemDicomObject, model: &T) -> Result<()>;
+pub trait DicomWriter<Backend, T> {
+    fn write_dicom(backend: &mut Backend, model: &T) -> Result<()>;
 }
 
 #[derive(Debug, Clone)]

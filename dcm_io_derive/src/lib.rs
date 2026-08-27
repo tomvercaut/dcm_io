@@ -61,18 +61,19 @@ pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
     }
 
     let expanded = quote! {
-        #[derive(Clone, Debug, Default)]
+        #[derive(Clone, Debug)]
         pub struct #reader_ident {
         }
 
-        impl #reader_ident {
-            pub fn new() -> Self {
-                Self {}
+        impl Default for #reader_ident {
+            fn default() -> Self {
+                Self {
+                }
             }
         }
 
-        impl dcm_io::DicomReader<#ident> for #reader_ident {
-            fn read_dicom_obj(obj: &mut dicom_object::InMemDicomObject) -> dcm_io::Result<#ident> {
+        impl dcm_io::DicomReader<dicom_object::InMemDicomObject, #ident> for #reader_ident {
+            fn read_dicom(backend: &dicom_object::InMemDicomObject) -> dcm_io::Result<#ident> {
                 #(#reading_fields)*
                 Ok(
                     #ident {
@@ -116,7 +117,7 @@ fn handle_fields(
             let fn_ident = Ident::new(&fn_name, Span::call_site());
             reading_fields.push(
                 quote! {
-                        let #field_ident = dcm_io::#fn_ident(obj, dicom_core::Tag(#lit_group, #lit_element))?;
+                        let #field_ident = dcm_io::#fn_ident(backend, dicom_core::Tag(#lit_group, #lit_element))?;
                     });
             self_fields.push(quote! {
                 #field_ident: #field_ident,
