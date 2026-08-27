@@ -40,6 +40,7 @@ pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
         VR::DA => FnName::Name("read_date".to_string()),
         VR::DT => FnName::Name("read_datetime".to_string()),
         VR::FL => FnName::Name("read_f32".to_string()),
+        VR::FD => FnName::Name("read_f64".to_string()),
         VR::TM => FnName::Name("read_time".to_string()),
         _ => FnName::Unknown,
     };

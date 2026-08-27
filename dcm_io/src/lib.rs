@@ -1,6 +1,7 @@
 mod date;
 mod datetime;
 mod float32;
+mod float64;
 mod string;
 mod tag;
 mod time;
@@ -10,6 +11,7 @@ pub use datetime::*;
 use dicom_core::chrono;
 use dicom_core::header::{ElementNumber, GroupNumber};
 pub use float32::*;
+pub use float64::*;
 pub use string::*;
 pub use tag::*;
 pub use time::*;

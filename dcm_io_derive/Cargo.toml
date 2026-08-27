@@ -37,3 +37,7 @@ path = "tests/parse_datetime.rs"
 [[test]]
 name = "parse_f32"
 path = "tests/parse_f32.rs"
+
+[[test]]
+name = "parse_f64"
+path = "tests/parse_f64.rs"
