@@ -25,3 +25,7 @@ path = "tests/parse_tag.rs"
 [[test]]
 name = "parse_date"
 path = "tests/parse_date.rs"
+
+[[test]]
+name = "parse_time"
+path = "tests/parse_time.rs"
