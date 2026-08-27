@@ -1,16 +1,18 @@
+mod date;
+mod datetime;
+mod float32;
 mod string;
 mod tag;
-mod date;
 mod time;
-mod datetime;
 
+pub use date::*;
+pub use datetime::*;
 use dicom_core::chrono;
 use dicom_core::header::{ElementNumber, GroupNumber};
+pub use float32::*;
 pub use string::*;
 pub use tag::*;
-pub use date::*;
 pub use time::*;
-pub use datetime::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;

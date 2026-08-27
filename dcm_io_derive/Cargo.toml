@@ -33,3 +33,7 @@ path = "tests/parse_time.rs"
 [[test]]
 name = "parse_datetime"
 path = "tests/parse_datetime.rs"
+
+[[test]]
+name = "parse_f32"
+path = "tests/parse_f32.rs"
