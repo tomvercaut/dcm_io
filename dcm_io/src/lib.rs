@@ -1,9 +1,12 @@
 mod string;
 mod tag;
+mod date;
 
+use dicom_core::chrono;
 use dicom_core::header::{ElementNumber, GroupNumber};
 pub use string::*;
 pub use tag::*;
+pub use date::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;
@@ -24,6 +27,12 @@ pub enum Error {
     MinimumRequiredElementsNotFound(GroupNumber, ElementNumber),
     #[error("Found more DICOM tag elements: group {0}, element {1}")]
     TooManyRequiredElementsFound(GroupNumber, ElementNumber),
+    #[error("Failed to convert DICOM value to NaiveDate.")]
+    InvalidDicomTagValue,
+    #[error("Failed to parse date / time.")]
+    ChroneParseError(#[from] chrono::ParseError),
+    #[error("Failed to convert DICOM value to NaiveDate.")]
+    DicomValueRangeError(#[from] dicom_core::value::range::Error),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

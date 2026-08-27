@@ -35,8 +35,9 @@ pub(crate) enum FnName {
 pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
     let fn_name = match vr {
         VR::SQ => FnName::Seq,
-        VR::AE | VR::AS | VR::LO => FnName::Name("read_str".to_string()),
+        VR::AE | VR::AS | VR::CS | VR::LO => FnName::Name("read_str".to_string()),
         VR::AT => FnName::Name("read_tag".to_string()),
+        VR::DA => FnName::Name("read_date".to_string()),
         _ => FnName::Unknown,
     };
     match fn_name {
