@@ -7,25 +7,25 @@ mod tests {
     use dicom_core::value::DicomDate;
 
     #[derive(Dicom, Default, Clone)]
-    pub struct RequiredDicomTagField {
+    pub struct RequiredField {
         #[dicom(tag = "0010,0020", vr = "DA")]
         pub field: NaiveDate,
     }
 
     #[derive(Dicom, Default, Clone)]
-    pub struct RequiredDicomTagsField {
+    pub struct RequiredFields {
         #[dicom(tag = "(0012,0063)", vr = "DA")]
         pub field: Vec<NaiveDate>,
     }
 
     #[derive(Dicom, Default, Clone)]
-    pub struct OptionalDicomTagField {
+    pub struct OptionalField {
         #[dicom(tag = "0010,0020", vr = "DA")]
         pub field: Option<NaiveDate>,
     }
 
     #[derive(Dicom, Default, Clone)]
-    pub struct OptionalDicomTagsField {
+    pub struct OptionalFields {
         #[dicom(tag = "(0012,0063)", vr = "DA")]
         pub field: Option<Vec<NaiveDate>>,
     }
@@ -39,7 +39,7 @@ mod tests {
             dicom_core::PrimitiveValue::Date(vec![DicomDate::from_ymd(2023, 5, 15).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredDicomTagFieldReader::read_dicom(&obj).unwrap();
+        let required_field = RequiredFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field, NaiveDate::from_ymd_opt(2023, 5, 15).unwrap());
     }
 
@@ -52,7 +52,7 @@ mod tests {
             dicom_core::PrimitiveValue::Date(vec![DicomDate::from_ymd(2023, 5, 15).unwrap(), DicomDate::from_ymd(2024, 6, 20).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredDicomTagsFieldReader::read_dicom(&obj).unwrap();
+        let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field.len(), 2);
         assert_eq!(
             required_field.field[0],
@@ -73,7 +73,7 @@ mod tests {
             dicom_core::PrimitiveValue::Date(vec![DicomDate::from_ymd(2023, 5, 15).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let optionalfield = OptionalDicomTagFieldReader::read_dicom(&obj).unwrap();
+        let optionalfield = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optionalfield.field.is_some());
         assert_eq!(
             optionalfield.field.as_ref().unwrap(),
@@ -84,7 +84,7 @@ mod tests {
     #[test]
     fn read_empty_optional_dicom_tag_field() {
         let obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalDicomTagFieldReader::read_dicom(&obj).unwrap();
+        let optional_field = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_none());
     }
 
@@ -97,7 +97,7 @@ mod tests {
             dicom_core::PrimitiveValue::Date(vec![DicomDate::from_ymd(2023, 5, 15).unwrap(), DicomDate::from_ymd(2024, 6, 20).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let optional_field = OptionalDicomTagsFieldReader::read_dicom(&obj).unwrap();
+        let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
         assert_eq!(
             optional_field
@@ -120,7 +120,7 @@ mod tests {
     #[test]
     fn read_empty_optional_dicom_tags_field() {
         let obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalDicomTagsFieldReader::read_dicom(&obj).unwrap();
+        let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_none());
     }
 }
