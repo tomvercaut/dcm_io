@@ -2,6 +2,7 @@ mod string;
 mod tag;
 mod date;
 mod time;
+mod datetime;
 
 use dicom_core::chrono;
 use dicom_core::header::{ElementNumber, GroupNumber};
@@ -9,6 +10,7 @@ pub use string::*;
 pub use tag::*;
 pub use date::*;
 pub use time::*;
+pub use datetime::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;
