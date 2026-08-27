@@ -37,7 +37,7 @@ mod tests {
     }
 
     #[test]
-    fn read_required_strs_field() {
+    fn read_required_fields() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
@@ -60,7 +60,7 @@ mod tests {
     }
 
     #[test]
-    fn read_optional_str_field() {
+    fn read_optional_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
         let optional_field = OptionalFieldReader::read_dicom(&obj).unwrap();
@@ -72,14 +72,14 @@ mod tests {
     }
 
     #[test]
-    fn read_empty_optional_str_field() {
+    fn read_empty_optional_field() {
         let obj = dicom_object::InMemDicomObject::new_empty();
         let optional_field = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_none());
     }
 
     #[test]
-    fn read_optional_strs_field() {
+    fn read_optional_fields() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
@@ -110,7 +110,7 @@ mod tests {
     }
 
     #[test]
-    fn read_empty_optional_strs_field() {
+    fn read_empty_optional_fields() {
         let obj = dicom_object::InMemDicomObject::new_empty();
         let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_none());
