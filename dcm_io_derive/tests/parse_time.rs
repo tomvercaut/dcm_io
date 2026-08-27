@@ -7,31 +7,31 @@ mod tests {
     use dicom_core::value::DicomTime;
 
     #[derive(Dicom, Default, Clone)]
-    pub struct RequiredDicomTagField {
+    pub struct RequiredField {
         #[dicom(tag = "0010,0020", vr = "TM")]
         pub field: NaiveTime,
     }
 
     #[derive(Dicom, Default, Clone)]
-    pub struct RequiredDicomTagsField {
+    pub struct RequiredFields {
         #[dicom(tag = "(0012,0063)", vr = "TM")]
         pub field: Vec<NaiveTime>,
     }
 
     #[derive(Dicom, Default, Clone)]
-    pub struct OptionalDicomTagField {
+    pub struct OptionalField {
         #[dicom(tag = "0010,0020", vr = "TM")]
         pub field: Option<NaiveTime>,
     }
 
     #[derive(Dicom, Default, Clone)]
-    pub struct OptionalDicomTagsField {
+    pub struct OptionalFields {
         #[dicom(tag = "(0012,0063)", vr = "TM")]
         pub field: Option<Vec<NaiveTime>>,
     }
 
     #[test]
-    fn read_required_dicom_tag_field() {
+    fn read_required_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let ime = DataElement::new(
             Tag(0x0010, 0x0020),
@@ -39,12 +39,12 @@ mod tests {
             dicom_core::PrimitiveValue::Time(vec![DicomTime::from_hms(14, 30, 15).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredDicomTagFieldReader::read_dicom(&obj).unwrap();
+        let required_field = RequiredFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field, NaiveTime::from_hms_opt(14, 30, 15).unwrap());
     }
 
     #[test]
-    fn read_required_dicom_tags_field() {
+    fn read_required_fields() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
@@ -52,7 +52,7 @@ mod tests {
             dicom_core::PrimitiveValue::Time(vec![DicomTime::from_hms(14, 30, 15).unwrap(), DicomTime::from_hms(16, 45, 30).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let required_field = RequiredDicomTagsFieldReader::read_dicom(&obj).unwrap();
+        let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field.len(), 2);
         assert_eq!(
             required_field.field[0],
@@ -65,7 +65,7 @@ mod tests {
     }
 
     #[test]
-    fn read_optional_dicom_tag_field() {
+    fn read_optional_field() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let ime = DataElement::new(
             Tag(0x0010, 0x0020),
@@ -73,7 +73,7 @@ mod tests {
             dicom_core::PrimitiveValue::Time(vec![DicomTime::from_hms(14, 30, 15).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let optionalfield = OptionalDicomTagFieldReader::read_dicom(&obj).unwrap();
+        let optionalfield = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optionalfield.field.is_some());
         assert_eq!(
             optionalfield.field.as_ref().unwrap(),
@@ -82,14 +82,14 @@ mod tests {
     }
 
     #[test]
-    fn read_empty_optional_dicom_tag_field() {
+    fn read_empty_optional_field() {
         let obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalDicomTagFieldReader::read_dicom(&obj).unwrap();
+        let optional_field = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_none());
     }
 
     #[test]
-    fn read_optional_dicom_tags_field() {
+    fn read_optional_fields() {
         let mut obj = dicom_object::InMemDicomObject::new_empty();
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
@@ -97,7 +97,7 @@ mod tests {
             dicom_core::PrimitiveValue::Time(vec![DicomTime::from_hms(14, 30, 15).unwrap(), DicomTime::from_hms(16, 45, 30).unwrap()].into()),
         );
         let _ = obj.put_element(ime);
-        let optional_field = OptionalDicomTagsFieldReader::read_dicom(&obj).unwrap();
+        let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
         assert_eq!(
             optional_field
@@ -118,9 +118,9 @@ mod tests {
     }
 
     #[test]
-    fn read_empty_optional_dicom_tags_field() {
+    fn read_empty_optional_fields() {
         let obj = dicom_object::InMemDicomObject::new_empty();
-        let optional_field = OptionalDicomTagsFieldReader::read_dicom(&obj).unwrap();
+        let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_none());
     }
 }
