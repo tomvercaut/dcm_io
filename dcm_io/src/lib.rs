@@ -10,6 +10,7 @@ mod other_byte;
 mod other_long;
 mod other_very_long;
 mod other_word;
+mod person_name;
 
 pub use date::*;
 pub use datetime::*;
@@ -25,6 +26,7 @@ pub use other_byte::*;
 pub use other_long::*;
 pub use other_very_long::*;
 pub use other_word::*;
+pub use person_name::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;

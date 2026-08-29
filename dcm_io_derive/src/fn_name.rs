@@ -46,6 +46,7 @@ pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
         VR::OL => FnName::Name("read_other_long".to_string()),
         VR::OV => FnName::Name("read_other_very_long".to_string()),
         VR::OW => FnName::Name("read_other_word".to_string()),
+        VR::PN => FnName::Name("read_person_name".to_string()),
         VR::TM => FnName::Name("read_time".to_string()),
         _ => FnName::Unknown,
     };
