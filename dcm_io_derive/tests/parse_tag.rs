@@ -52,14 +52,8 @@ mod tests {
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field.len(), 2);
-        assert_eq!(
-            required_field.field[0],
-            DicomTag::new(0x1234, 0x5600)
-        );
-        assert_eq!(
-            required_field.field[1],
-            DicomTag::new(0x7890, 0x1200)
-        );
+        assert_eq!(required_field.field[0], DicomTag::new(0x1234, 0x5600));
+        assert_eq!(required_field.field[1], DicomTag::new(0x7890, 0x1200));
     }
 
     #[test]
@@ -97,14 +91,7 @@ mod tests {
         let _ = obj.put_element(ime);
         let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
-        assert_eq!(
-            optional_field
-                .field
-                .as_ref()
-                .unwrap()
-                .len(),
-            2
-        );
+        assert_eq!(optional_field.field.as_ref().unwrap().len(), 2);
         assert_eq!(
             optional_field.field.as_ref().unwrap()[0],
             DicomTag::new(0x1234, 0x5600)

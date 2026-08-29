@@ -41,3 +41,7 @@ path = "tests/parse_f32.rs"
 [[test]]
 name = "parse_f64"
 path = "tests/parse_f64.rs"
+
+[[test]]
+name = "parse_int_string"
+path = "tests/parse_int_string.rs"

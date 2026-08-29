@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use dcm_io::{DicomReader};
+    use dcm_io::DicomReader;
     use dcm_io_derive::Dicom;
     use dicom_core::{DataElement, Tag, VR};
 
@@ -49,14 +49,8 @@ mod tests {
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field.len(), 2);
-        assert_eq!(
-            required_field.field[0].as_str(),
-            "123456"
-        );
-        assert_eq!(
-            required_field.field[1].as_str(),
-            "789012"
-        );
+        assert_eq!(required_field.field[0].as_str(), "123456");
+        assert_eq!(required_field.field[1].as_str(), "789012");
     }
 
     #[test]
@@ -65,10 +59,7 @@ mod tests {
         let _ = obj.put_str(Tag(0x0010, 0x0020), VR::LO, "123456");
         let optional_field = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
-        assert_eq!(
-            optional_field.field.as_ref().unwrap().as_str(),
-            "123456"
-        );
+        assert_eq!(optional_field.field.as_ref().unwrap().as_str(), "123456");
     }
 
     #[test]
@@ -91,22 +82,9 @@ mod tests {
         let _ = obj.put_element(ime);
         let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
-        assert_eq!(
-            optional_field
-                .field
-                .as_ref()
-                .unwrap()
-                .len(),
-            2
-        );
-        assert_eq!(
-            optional_field.field.as_ref().unwrap()[0].as_str(),
-            "123456"
-        );
-        assert_eq!(
-            optional_field.field.as_ref().unwrap()[1].as_str(),
-            "789012"
-        );
+        assert_eq!(optional_field.field.as_ref().unwrap().len(), 2);
+        assert_eq!(optional_field.field.as_ref().unwrap()[0].as_str(), "123456");
+        assert_eq!(optional_field.field.as_ref().unwrap()[1].as_str(), "789012");
     }
 
     #[test]

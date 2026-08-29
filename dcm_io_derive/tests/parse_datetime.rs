@@ -2,10 +2,10 @@
 mod tests {
     use dcm_io::DicomReader;
     use dcm_io_derive::Dicom;
-    use dicom_core::{DataElement, Tag, VR};
     use dicom_core::chrono::NaiveDateTime;
     use dicom_core::prelude::DicomDate;
     use dicom_core::value::{DicomDateTime, DicomTime};
+    use dicom_core::{DataElement, Tag, VR};
 
     #[derive(Dicom, Default, Clone)]
     pub struct RequiredField {
@@ -37,11 +37,23 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0010, 0x0020),
             VR::DT,
-            dicom_core::PrimitiveValue::DateTime(vec![DicomDateTime::from_date_and_time(DicomDate::from_ymd(2024, 8, 27).unwrap(), DicomTime::from_hms(14, 30, 15).unwrap()).unwrap()].into()),
+            dicom_core::PrimitiveValue::DateTime(
+                vec![
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms(14, 30, 15).unwrap(),
+                    )
+                        .unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldReader::read_dicom(&obj).unwrap();
-        assert_eq!(required_field.field, NaiveDateTime::parse_from_str("2024-08-27 14:30:15", "%Y-%m-%d %H:%M:%S").unwrap());
+        assert_eq!(
+            required_field.field,
+            NaiveDateTime::parse_from_str("2024-08-27 14:30:15", "%Y-%m-%d %H:%M:%S").unwrap()
+        );
     }
 
     #[test]
@@ -50,10 +62,21 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
             VR::DT,
-            dicom_core::PrimitiveValue::DateTime(vec![
-                DicomDateTime::from_date_and_time(DicomDate::from_ymd(2024, 8, 27).unwrap(), DicomTime::from_hms(14, 30, 15).unwrap()).unwrap(),
-                DicomDateTime::from_date_and_time(DicomDate::from_ymd(2024, 8, 27).unwrap(), DicomTime::from_hms(16, 45, 30).unwrap()).unwrap(),
-            ].into()),
+            dicom_core::PrimitiveValue::DateTime(
+                vec![
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms(14, 30, 15).unwrap(),
+                    )
+                        .unwrap(),
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms(16, 45, 30).unwrap(),
+                    )
+                        .unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
@@ -74,9 +97,16 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0010, 0x0020),
             VR::DT,
-            dicom_core::PrimitiveValue::DateTime(vec![
-                DicomDateTime::from_date_and_time(DicomDate::from_ymd(2024, 8, 27).unwrap(), DicomTime::from_hms(14, 30, 15).unwrap()).unwrap(),
-            ].into()),
+            dicom_core::PrimitiveValue::DateTime(
+                vec![
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms(14, 30, 15).unwrap(),
+                    )
+                        .unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let optionalfield = OptionalFieldReader::read_dicom(&obj).unwrap();
@@ -100,22 +130,26 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
             VR::DT,
-            dicom_core::PrimitiveValue::DateTime(vec![
-                DicomDateTime::from_date_and_time(DicomDate::from_ymd(2024, 8, 27).unwrap(), DicomTime::from_hms(14, 30, 15).unwrap()).unwrap(),
-                DicomDateTime::from_date_and_time(DicomDate::from_ymd(2024, 8, 27).unwrap(), DicomTime::from_hms(16, 45, 30).unwrap()).unwrap(),
-            ].into()),
+            dicom_core::PrimitiveValue::DateTime(
+                vec![
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms(14, 30, 15).unwrap(),
+                    )
+                        .unwrap(),
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms(16, 45, 30).unwrap(),
+                    )
+                        .unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
-        assert_eq!(
-            optional_field
-                .field
-                .as_ref()
-                .unwrap()
-                .len(),
-            2
-        );
+        assert_eq!(optional_field.field.as_ref().unwrap().len(), 2);
         assert_eq!(
             optional_field.field.as_ref().unwrap()[0],
             NaiveDateTime::parse_from_str("2024-08-27 14:30:15", "%Y-%m-%d %H:%M:%S").unwrap()
@@ -139,18 +173,23 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0010, 0x0020),
             VR::DT,
-            dicom_core::PrimitiveValue::DateTime(vec![
-                DicomDateTime::from_date_and_time(
-                    DicomDate::from_ymd(2024, 8, 27).unwrap(),
-                    DicomTime::from_hms_micro(14, 30, 15, 123_456).unwrap(),
-                ).unwrap()
-            ].into()),
+            dicom_core::PrimitiveValue::DateTime(
+                vec![
+                    DicomDateTime::from_date_and_time(
+                        DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                        DicomTime::from_hms_micro(14, 30, 15, 123_456).unwrap(),
+                    )
+                        .unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldReader::read_dicom(&obj).unwrap();
         assert_eq!(
             required_field.field,
-            NaiveDateTime::parse_from_str("2024-08-27 14:30:15.123456", "%Y-%m-%d %H:%M:%S%.f").unwrap()
+            NaiveDateTime::parse_from_str("2024-08-27 14:30:15.123456", "%Y-%m-%d %H:%M:%S%.f")
+                .unwrap()
         );
     }
 
@@ -160,9 +199,12 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0010, 0x0020),
             VR::DT,
-            dicom_core::PrimitiveValue::DateTime(vec![
-                DicomDateTime::from_date(DicomDate::from_ymd(2024, 8, 27).unwrap())
-            ].into()),
+            dicom_core::PrimitiveValue::DateTime(
+                vec![DicomDateTime::from_date(
+                    DicomDate::from_ymd(2024, 8, 27).unwrap(),
+                )]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldReader::read_dicom(&obj).unwrap();

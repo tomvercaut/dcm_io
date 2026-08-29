@@ -5,6 +5,7 @@ mod float64;
 mod string;
 mod tag;
 mod time;
+mod int_string;
 
 pub use date::*;
 pub use datetime::*;
@@ -15,6 +16,7 @@ pub use float64::*;
 pub use string::*;
 pub use tag::*;
 pub use time::*;
+pub use int_string::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;
@@ -41,6 +43,8 @@ pub enum Error {
     ChroneParseError(#[from] chrono::ParseError),
     #[error("Failed to convert DICOM value to NaiveDate.")]
     DicomValueRangeError(#[from] dicom_core::value::range::Error),
+    #[error("Failed to parse integer string.")]
+    ParseIntError(#[from] std::num::ParseIntError),
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

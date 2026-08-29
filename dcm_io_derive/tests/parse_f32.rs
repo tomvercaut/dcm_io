@@ -52,14 +52,8 @@ mod tests {
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
         assert_eq!(required_field.field.len(), 2);
-        assert_eq!(
-            required_field.field[0],
-            1.5
-        );
-        assert_eq!(
-            required_field.field[1],
-            2.7
-        );
+        assert_eq!(required_field.field[0], 1.5);
+        assert_eq!(required_field.field[1], 2.7);
     }
 
     #[test]
@@ -73,10 +67,7 @@ mod tests {
         let _ = obj.put_element(ime);
         let optionalfield = OptionalFieldReader::read_dicom(&obj).unwrap();
         assert!(optionalfield.field.is_some());
-        assert_eq!(
-            optionalfield.field.as_ref().unwrap(),
-            &3.14
-        );
+        assert_eq!(optionalfield.field.as_ref().unwrap(), &3.14);
     }
 
     #[test]
@@ -97,22 +88,9 @@ mod tests {
         let _ = obj.put_element(ime);
         let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
-        assert_eq!(
-            optional_field
-                .field
-                .as_ref()
-                .unwrap()
-                .len(),
-            2
-        );
-        assert_eq!(
-            optional_field.field.as_ref().unwrap()[0],
-            1.5
-        );
-        assert_eq!(
-            optional_field.field.as_ref().unwrap()[1],
-            2.7
-        );
+        assert_eq!(optional_field.field.as_ref().unwrap().len(), 2);
+        assert_eq!(optional_field.field.as_ref().unwrap()[0], 1.5);
+        assert_eq!(optional_field.field.as_ref().unwrap()[1], 2.7);
     }
 
     #[test]

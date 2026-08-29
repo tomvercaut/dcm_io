@@ -1,5 +1,5 @@
-use proc_macro::TokenStream;
 use dicom_core::{Tag, VR};
+use proc_macro::TokenStream;
 use std::str::FromStr;
 use syn::{Attribute, Field, LitStr};
 

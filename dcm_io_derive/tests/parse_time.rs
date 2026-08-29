@@ -2,9 +2,9 @@
 mod tests {
     use dcm_io::DicomReader;
     use dcm_io_derive::Dicom;
-    use dicom_core::{DataElement, Tag, VR};
     use dicom_core::chrono::NaiveTime;
     use dicom_core::value::DicomTime;
+    use dicom_core::{DataElement, Tag, VR};
 
     #[derive(Dicom, Default, Clone)]
     pub struct RequiredField {
@@ -40,7 +40,10 @@ mod tests {
         );
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldReader::read_dicom(&obj).unwrap();
-        assert_eq!(required_field.field, NaiveTime::from_hms_opt(14, 30, 15).unwrap());
+        assert_eq!(
+            required_field.field,
+            NaiveTime::from_hms_opt(14, 30, 15).unwrap()
+        );
     }
 
     #[test]
@@ -49,7 +52,13 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
             VR::TM,
-            dicom_core::PrimitiveValue::Time(vec![DicomTime::from_hms(14, 30, 15).unwrap(), DicomTime::from_hms(16, 45, 30).unwrap()].into()),
+            dicom_core::PrimitiveValue::Time(
+                vec![
+                    DicomTime::from_hms(14, 30, 15).unwrap(),
+                    DicomTime::from_hms(16, 45, 30).unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let required_field = RequiredFieldsReader::read_dicom(&obj).unwrap();
@@ -94,19 +103,18 @@ mod tests {
         let ime = DataElement::new(
             Tag(0x0012, 0x0063),
             VR::TM,
-            dicom_core::PrimitiveValue::Time(vec![DicomTime::from_hms(14, 30, 15).unwrap(), DicomTime::from_hms(16, 45, 30).unwrap()].into()),
+            dicom_core::PrimitiveValue::Time(
+                vec![
+                    DicomTime::from_hms(14, 30, 15).unwrap(),
+                    DicomTime::from_hms(16, 45, 30).unwrap(),
+                ]
+                    .into(),
+            ),
         );
         let _ = obj.put_element(ime);
         let optional_field = OptionalFieldsReader::read_dicom(&obj).unwrap();
         assert!(optional_field.field.is_some());
-        assert_eq!(
-            optional_field
-                .field
-                .as_ref()
-                .unwrap()
-                .len(),
-            2
-        );
+        assert_eq!(optional_field.field.as_ref().unwrap().len(), 2);
         assert_eq!(
             optional_field.field.as_ref().unwrap()[0],
             NaiveTime::from_hms_opt(14, 30, 15).unwrap()
