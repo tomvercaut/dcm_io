@@ -9,6 +9,7 @@ mod int_string;
 mod other_byte;
 mod other_long;
 mod other_very_long;
+mod other_word;
 
 pub use date::*;
 pub use datetime::*;
@@ -23,6 +24,7 @@ pub use int_string::*;
 pub use other_byte::*;
 pub use other_long::*;
 pub use other_very_long::*;
+pub use other_word::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;
