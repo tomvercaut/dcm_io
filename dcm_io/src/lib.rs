@@ -7,6 +7,7 @@ mod tag;
 mod time;
 mod int_string;
 mod other_byte;
+mod other_long;
 
 pub use date::*;
 pub use datetime::*;
@@ -19,6 +20,7 @@ pub use tag::*;
 pub use time::*;
 pub use int_string::*;
 pub use other_byte::*;
+pub use other_long::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;

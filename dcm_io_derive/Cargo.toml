@@ -49,3 +49,7 @@ path = "tests/parse_int_string.rs"
 [[test]]
 name = "parse_other_byte"
 path = "tests/parse_other_byte.rs"
+
+[[test]]
+name = "parse_other_long"
+path = "tests/parse_other_long.rs"
