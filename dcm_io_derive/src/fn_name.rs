@@ -50,6 +50,7 @@ pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
         VR::OW => FnName::Name("read_other_word".to_string()),
         VR::PN => FnName::Name("read_person_name".to_string()),
         VR::SL => FnName::Name("read_signed_long".to_string()),
+        VR::SS => FnName::Name("read_signed_short".to_string()),
         VR::TM => FnName::Name("read_time".to_string()),
         _ => FnName::Unknown,
     };
