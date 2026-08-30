@@ -1,38 +1,8 @@
-use crate::Error;
+use crate::{DicomTag, Error};
 use dicom_core::{value, Tag};
 use dicom_core::value::Value;
 use dicom_object::InMemDicomObject;
 use dicom_object::mem::InMemElement;
-
-#[derive(Debug, Default, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct DicomTag {
-    pub group: u16,
-    pub element: u16,
-}
-
-impl From<u32> for DicomTag {
-    fn from(v: u32) -> Self {
-        Self {
-            group: (v >> 16) as u16,
-            element: (v & 0xFFFF) as u16,
-        }
-    }
-}
-
-impl From<Tag> for DicomTag {
-    fn from(tag: Tag) -> Self {
-        Self {
-            group: tag.0,
-            element: tag.1,
-        }
-    }
-}
-
-impl DicomTag {
-    pub fn new(group: u16, element: u16) -> Self {
-        Self { group, element }
-    }
-}
 
 pub fn read_tag(obj: &InMemDicomObject, tag: Tag) -> crate::Result<DicomTag> {
     let value = obj

@@ -117,7 +117,7 @@ fn handle_fields(
             let fn_ident = Ident::new(&fn_name, Span::call_site());
             reading_fields.push(
                 quote! {
-                        let #field_ident = dcm_io::#fn_ident(backend, dicom_core::Tag(#lit_group, #lit_element))?;
+                        let #field_ident = dcm_io::read::#fn_ident(backend, dicom_core::Tag(#lit_group, #lit_element))?;
                     });
             self_fields.push(quote! {
                 #field_ident: #field_ident,
