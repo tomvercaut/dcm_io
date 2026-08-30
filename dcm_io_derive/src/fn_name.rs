@@ -35,7 +35,9 @@ pub(crate) enum FnName {
 pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
     let fn_name = match vr {
         VR::SQ => FnName::Seq,
-        VR::AE | VR::AS | VR::CS | VR::DS | VR::LO | VR::LT | VR::SH | VR::UC | VR::UT => FnName::Name("read_str".to_string()),
+        VR::AE | VR::AS | VR::CS | VR::DS | VR::LO | VR::LT | VR::SH | VR::UC | VR::UT => {
+            FnName::Name("read_str".to_string())
+        }
         VR::AT => FnName::Name("read_tag".to_string()),
         VR::DA => FnName::Name("read_date".to_string()),
         VR::DT => FnName::Name("read_datetime".to_string()),
@@ -47,6 +49,7 @@ pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
         VR::OV => FnName::Name("read_other_very_long".to_string()),
         VR::OW => FnName::Name("read_other_word".to_string()),
         VR::PN => FnName::Name("read_person_name".to_string()),
+        VR::SL => FnName::Name("read_signed_long".to_string()),
         VR::TM => FnName::Name("read_time".to_string()),
         _ => FnName::Unknown,
     };

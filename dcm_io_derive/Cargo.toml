@@ -65,3 +65,7 @@ path = "tests/parse_other_word.rs"
 [[test]]
 name = "parse_person_name"
 path = "tests/parse_person_name.rs"
+
+[[test]]
+name = "parse_signed_long"
+path = "tests/parse_signed_long.rs"
