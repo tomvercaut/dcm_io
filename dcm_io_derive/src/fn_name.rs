@@ -55,7 +55,7 @@ pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
         VR::TM => FnName::Name("read_time".to_string()),
         VR::UL => FnName::Name("read_unsigned_long".to_string()),
         VR::US => FnName::Name("read_unsigned_short".to_string()),
-        _ => FnName::Unknown,
+        VR::UV => FnName::Name("read_unsigned_very_long".to_string()),
     };
     match fn_name {
         FnName::Seq => fn_name,

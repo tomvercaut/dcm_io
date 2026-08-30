@@ -16,6 +16,7 @@ mod signed_short;
 mod signed_very_long;
 mod unsigned_long;
 mod unsigned_short;
+mod unsigned_very_long;
 
 pub use date::*;
 pub use datetime::*;
@@ -37,6 +38,7 @@ pub use signed_short::*;
 pub use signed_very_long::*;
 pub use unsigned_long::*;
 pub use unsigned_short::*;
+pub use unsigned_very_long::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;
