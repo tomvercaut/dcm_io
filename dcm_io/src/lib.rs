@@ -14,6 +14,7 @@ mod person_name;
 mod signed_long;
 mod signed_short;
 mod signed_very_long;
+mod unsigned_long;
 
 pub use date::*;
 pub use datetime::*;
@@ -33,6 +34,7 @@ pub use person_name::*;
 pub use signed_long::*;
 pub use signed_short::*;
 pub use signed_very_long::*;
+pub use unsigned_long::*;
 
 use dicom_core::value::CastValueError;
 use dicom_object::AccessError;

@@ -77,3 +77,7 @@ path = "tests/parse_signed_short.rs"
 [[test]]
 name = "parse_signed_very_long"
 path = "tests/parse_signed_very_long.rs"
+
+[[test]]
+name = "parse_unsigned_long"
+path = "tests/parse_unsigned_long.rs"
