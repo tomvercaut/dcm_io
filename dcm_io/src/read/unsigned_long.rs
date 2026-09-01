@@ -46,7 +46,7 @@ fn element_to_u32(elem: &InMemElement, tag: Tag) -> Result<u32, Error> {
                 let v = bytes[0];
                 Ok(v)
             } else {
-                if bytes.len() == 0 {
+                if bytes.is_empty() {
                     Err(Error::MinimumRequiredElementsNotFound(tag.0, tag.1))
                 } else {
                     Err(Error::TooManyRequiredElementsFound(tag.0, tag.1))

@@ -63,7 +63,7 @@ pub(crate) fn to_fn_name(vr: VR, multiple: bool, optional: bool) -> FnName {
         FnName::Name(name) => {
             let mut tname = name;
             if multiple {
-                tname.push_str("s");
+                tname.push('s');
             }
             if optional {
                 tname.push_str("_opt");
