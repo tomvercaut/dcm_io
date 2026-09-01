@@ -42,8 +42,8 @@ impl TypeInfo {
     /// - `TypeInfo::new(&Vec<DicomObject>, "SQ")` → `{ ty: DicomObject, is_seq: true, multiple: false, optional: false }`
 
     pub(crate) fn new(ty: &Type, vr: VR) -> Self {
-        match get_inner_type_option(&ty) {
-            None => match get_inner_type_vec(&ty) {
+        match get_inner_type_option(ty) {
+            None => match get_inner_type_vec(ty) {
                 None => Self {
                     ty: ty.clone(),
                     is_seq: false,
@@ -59,7 +59,7 @@ impl TypeInfo {
                     }
                 }
             },
-            Some(inner_option_ty) => match get_inner_type_vec(&inner_option_ty) {
+            Some(inner_option_ty) => match get_inner_type_vec(inner_option_ty) {
                 None => Self {
                     ty: inner_option_ty.clone(),
                     is_seq: false,

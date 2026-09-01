@@ -52,7 +52,7 @@ pub fn dicom_macro(tokens: TokenStream) -> TokenStream {
             &mut reading_fields,
             &mut self_fields,
             &dicom_field_attr,
-            &field,
+            field,
         );
 
         let q = quote! {
@@ -95,7 +95,7 @@ fn handle_fields(
 ) {
     let vr = *dicom_field_attr.vr.as_ref().unwrap();
     let type_info = TypeInfo::new(&field.ty, vr);
-    let (lit_group, lit_element) = literal_group_element(&dicom_field_attr);
+    let (lit_group, lit_element) = literal_group_element(dicom_field_attr);
     let field_ident = field.ident.clone().unwrap();
     match to_fn_name(vr, type_info.multiple, type_info.optional) {
         FnName::Seq => {
