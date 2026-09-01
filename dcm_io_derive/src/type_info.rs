@@ -19,7 +19,6 @@ impl TypeInfo {
     ///
     /// This method examines the Rust type to determine whether it represents an optional field
     /// (wrapped in `Option<T>`), a field with multiple values (wrapped in `Vec<T>`), or both.
-    /// For sequence types (VR "SQ" or "sq"), it preserves the outer type structure.
     ///
     /// # Arguments
     ///
@@ -29,9 +28,9 @@ impl TypeInfo {
     /// # Returns
     ///
     /// Returns a `TypeInfo` struct containing:
-    /// - `ty`: The inner type (or outer type for sequences)
-    /// - `is_seq`: `true` if the VR is a sequence type ("SQ" or "sq")
-    /// - `multiple`: `true` if the field can contain multiple values (`Vec<T>`)
+    /// - `ty`: The inner type
+    /// - `is_seq`: `true` if the VR is a sequence type (VR::SQ")
+    /// - `multiple`: `true` if the field can contain multiple values (`Vec<T>`), `false` if a sequence
     /// - `optional`: `true` if the field is optional (`Option<T>`)
     ///
     /// # Examples
@@ -40,7 +39,7 @@ impl TypeInfo {
     /// - `TypeInfo::new(&Option<String>, "LO")` → `{ ty: String, is_seq: false, multiple: false, optional: true }`
     /// - `TypeInfo::new(&Vec<String>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: false }`
     /// - `TypeInfo::new(&Option<Vec<String>>, "LO")` → `{ ty: String, is_seq: false, multiple: true, optional: true }`
-    /// - `TypeInfo::new(&Vec<DicomObject>, "SQ")` → `{ ty: Vec<DicomObject>, is_seq: true, multiple: false, optional: false }`
+    /// - `TypeInfo::new(&Vec<DicomObject>, "SQ")` → `{ ty: DicomObject, is_seq: true, multiple: false, optional: false }`
 
     pub(crate) fn new(ty: &Type, vr: VR) -> Self {
         match get_inner_type_option(&ty) {
@@ -52,21 +51,11 @@ impl TypeInfo {
                     optional: false,
                 },
                 Some(inner_vec_ty) => {
-                    if vr == VR::SQ {
-                        Self {
-                            // Store the outer type of the sequence, not the inner.
-                            ty: ty.clone(),
-                            is_seq: true,
-                            multiple: false,
-                            optional: false,
-                        }
-                    } else {
-                        Self {
-                            ty: inner_vec_ty.clone(),
-                            is_seq: false,
-                            multiple: true,
-                            optional: false,
-                        }
+                    Self {
+                        ty: inner_vec_ty.clone(),
+                        is_seq: vr == VR::SQ,
+                        multiple: vr != VR::SQ,
+                        optional: false,
                     }
                 }
             },
@@ -78,21 +67,11 @@ impl TypeInfo {
                     optional: true,
                 },
                 Some(inner_vec_ty) => {
-                    if vr == VR::SQ {
-                        Self {
-                            // Store the outer type of the sequence, not the inner.
-                            ty: inner_option_ty.clone(),
-                            is_seq: true,
-                            multiple: false,
-                            optional: true,
-                        }
-                    } else {
-                        Self {
-                            ty: inner_vec_ty.clone(),
-                            is_seq: false,
-                            multiple: true,
-                            optional: true,
-                        }
+                    Self {
+                        ty: inner_vec_ty.clone(),
+                        is_seq: vr == VR::SQ,
+                        multiple: vr != VR::SQ,
+                        optional: true,
                     }
                 }
             },
