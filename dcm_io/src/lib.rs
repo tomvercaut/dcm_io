@@ -31,6 +31,8 @@ pub enum Error {
     DicomValueRangeError(#[from] dicom_core::value::range::Error),
     #[error("Failed to parse integer string.")]
     ParseIntError(#[from] std::num::ParseIntError),
+    #[error("Expected DICOM sequence element.")]
+    ExpectedSequenceDicomElement,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -48,4 +50,10 @@ pub enum Value<T> {
     Single(T),
     Multiple(Vec<T>),
     Sequence(Vec<T>),
+}
+
+pub trait DicomSeqReader<Backend, ItemBackend = dicom_object::InMemDicomObject> {
+    fn read_dicom_seq<T, R>(backend: &Backend, rdr: R) -> Result<Vec<T>>
+    where
+        R: DicomReader<ItemBackend, T>;
 }

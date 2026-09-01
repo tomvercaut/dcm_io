@@ -2,6 +2,7 @@ mod attr;
 mod fn_name;
 mod inner;
 mod type_info;
+mod seq;
 
 use crate::attr::{DicomFieldAttr, get_dicom_field_attr};
 use crate::fn_name::{FnName, to_fn_name};
